@@ -701,7 +701,7 @@ def get_coefficient():
                                        sheet1.cell(j + 1, 1).value, sheet1.cell(j + 2, 1).value, elemp[i][3]) / 0.001
                 break
             if elemp[i][3] >= 375:
-                elemvp[i][16] = 0.003155/0.001
+                elemvp[i][16] = 0.003155 / 0.001
                 break
             if elemp[i][3] <= 100:
                 elemvp[i][16] = 1
