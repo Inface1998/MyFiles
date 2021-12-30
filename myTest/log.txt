@@ -1,4 +1,0 @@
-2021-10-21 20:29:01,961 - TT1.py[line:8] - INFO: 这是 loggging info message
-2021-10-21 20:29:01,961 - TT1.py[line:10] - WARNING: 这是 loggging a warning message
-2021-10-21 20:29:01,961 - TT1.py[line:11] - ERROR: 这是 an loggging error message
-2021-10-21 20:29:01,961 - TT1.py[line:12] - CRITICAL: 这是 loggging critical message

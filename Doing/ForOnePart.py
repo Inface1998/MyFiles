@@ -60,45 +60,6 @@ def interact_judgement(data_aggregate, point1):
     return sign
 
 
-# 创建骨料数据
-def aggregate_data(r_limit1, r_limit2, volume_ratio):
-    data_aggregate = []
-    # Generate spheres randomly
-    points1 = []
-    volume1 = 0
-    count = 1
-    while True:
-        # 球形骨料的半径
-        x1 = np.random.uniform(r_limit2, side_length - r_limit2)  # 球心的x坐标
-        y1 = np.random.uniform(r_limit2, side_length - r_limit2)  # 球心的y坐标
-        z1 = np.random.uniform(r_limit2, side_length - r_limit2)  # 球心的Z坐标
-        r1 = np.random.uniform(r_limit1, r_limit2)
-        point1 = (x1, y1, z1, r1)
-        if len(points1) == 0:
-            points1.append(point1)
-            data_aggregate.append(point1)
-            volume1 += ((point1[3]) ** 3) * np.pi * 4 / 3
-        elif interact_judgement(data_aggregate, point1):
-            points1.append(point1)
-            data_aggregate.append(point1)
-            volume1 += ((point1[3]) ** 3) * np.pi * 4 / 3
-            count += 1
-        if volume1 >= volume_ratio * (side_length ** 3):
-            break
-    cwd = os.getcwd()
-    na = len(data_aggregate)
-    data_file = cwd + "\data_aggregate.txt"
-    with open(data_file, 'w') as da:
-        for i in range(na):
-            da.write('%.5f' % data_aggregate[i][0] + "," +
-                     '%.5f' % data_aggregate[i][1] + "," +
-                     '%.5f' % data_aggregate[i][2] + "," +
-                     '%.5f' % data_aggregate[i][3])
-            if i != len(data_aggregate) - 1:
-                da.write("\n")
-    return data_file,na
-
-
 def tuple_merge():
     tuple = (a.instances['Part-Base-1'],)
     for i in range(na):
@@ -113,6 +74,7 @@ def del_parts():
 
 
 def get_node_coord(excel_name):
+    logging.info("get_node_coord")
     wb = openpyxl.Workbook()
     ws1 = wb.create_sheet("AllNode", 0)
     ws1.cell(1, 1, "Node")
@@ -120,17 +82,20 @@ def get_node_coord(excel_name):
     ws1.cell(1, 3, "M-NodeCoordy")
     ws1.cell(1, 4, "M-NodeCoordz")
     for i in range(NN):
-        nd = mdb.models['Model-1'].parts['Part-1'].nodes[i].coordinates
-        ws1.cell(i+2,1,i+1)
-        ws1.cell(i+2,2,nd[0])
-        ws1.cell(i+2,3,nd[1])
-        ws1.cell(i+2,4,nd[2])
+        nd = mdb.models['Model-1'].parts['Part-1'].nodes[i]
+        ws1.cell(i+2,1,nd.label)
+        ws1.cell(i+2,2,nd.coordinates[0])
+        ws1.cell(i+2,3,nd.coordinates[1])
+        ws1.cell(i+2,4,nd.coordinates[2])
     ws2 = wb.create_sheet("MElement", 1)
     ws2.cell(1, 1, "ELabel")
     ws2.cell(1, 2, "ENode1")
     ws2.cell(1, 3, "ENode2")
     ws2.cell(1, 4, "ENode3")
     ws2.cell(1, 5, "ENode4")
+    ws2.cell(1, 6, "x")
+    ws2.cell(1, 7, "y")
+    ws2.cell(1, 8, "z")
     for j in range(NME):
         label = a1.sets['Set-Matrix'].elements[j].label
         connect = a1.sets['Set-Matrix'].elements[j].connectivity
@@ -139,12 +104,22 @@ def get_node_coord(excel_name):
         ws2.cell(j + 2, 3, connect[1]+1)
         ws2.cell(j + 2, 4, connect[2]+1)
         ws2.cell(j + 2, 5, connect[3]+1)
+        nmd1 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[0]].coordinates
+        nmd2 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[1]].coordinates
+        nmd3 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[2]].coordinates
+        nmd4 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[3]].coordinates
+        ws2.cell(j + 2, 6, 0.25 * (nmd1[0] + nmd2[0] + nmd3[0] + nmd4[0]))
+        ws2.cell(j + 2, 7, 0.25 * (nmd1[1] + nmd2[1] + nmd3[1] + nmd4[1]))
+        ws2.cell(j + 2, 8, 0.25 * (nmd1[2] + nmd2[2] + nmd3[2] + nmd4[2]))
     ws3 = wb.create_sheet("AElement", 2)
     ws3.cell(1, 1, "ELabel")
     ws3.cell(1, 2, "ENode1")
     ws3.cell(1, 3, "ENode2")
     ws3.cell(1, 4, "ENode3")
     ws3.cell(1, 5, "ENode4")
+    ws3.cell(1, 6, "x")
+    ws3.cell(1, 7, "y")
+    ws3.cell(1, 8, "z")
     for k in range(NAE):
         label = a1.sets['Set-Balls'].elements[k].label
         connect = a1.sets['Set-Balls'].elements[k].connectivity
@@ -153,12 +128,27 @@ def get_node_coord(excel_name):
         ws3.cell(k + 2, 3, connect[1]+1)
         ws3.cell(k + 2, 4, connect[2]+1)
         ws3.cell(k + 2, 5, connect[3]+1)
+        nmd1 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[0]].coordinates
+        nmd2 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[1]].coordinates
+        nmd3 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[2]].coordinates
+        nmd4 = mdb.models['Model-1'].parts['Part-1'].nodes[connect[3]].coordinates
+        ws3.cell(k + 2, 6, 0.25 * (nmd1[0] + nmd2[0] + nmd3[0] + nmd4[0]))
+        ws3.cell(k + 2, 7, 0.25 * (nmd1[1] + nmd2[1] + nmd3[1] + nmd4[1]))
+        ws3.cell(k + 2, 8, 0.25 * (nmd1[2] + nmd2[2] + nmd3[2] + nmd4[2]))
+    sh = wb[wb.sheetnames[3]]
+    sh.title = "Initial"
     wb.save(excel_name)
+    wb.close()
 
 
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+logging.basicConfig(level=logging.INFO, filename='./log.txt', format=LOG_FORMAT, datefmt=DATE_FORMAT)
 # 定义立方体试块边长（mm）
 side_length = 0.1
+IT = 12.5
 # modeling
+tb1 = ()
 myModel = mdb.Model(name='Model-1')
 mysketch_1 = myModel.ConstrainedSketch(name='mysketch_1', sheetSize=200.0)
 mysketch_1.rectangle(point1=(0.0, 0.0), point2=(side_length, side_length))
@@ -167,15 +157,17 @@ myPart.BaseSolidExtrude(sketch=mysketch_1, depth=side_length)
 mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='Part-Base-1',part=mdb.models['Model-1'].parts['Part-Base'])
 # 给基质骨料等赋予材料属性
 mdb.models['Model-1'].Material(name='Material-Matrix')
-mdb.models['Model-1'].materials['Material-Matrix'].Density(table=((2300.0,),))
+mdb.models['Model-1'].materials['Material-Matrix'].Density(table=((2500.0,),))
 mdb.models['Model-1'].materials['Material-Matrix'].Elastic(table=((40e9, 0.2),))
-mdb.models['Model-1'].materials['Material-Matrix'].SpecificHeat(table=((900,),))
+for i in range(80):
+    tb1 = tb1+((900+80*(10*i+20.0)/120-4*(pow((10*i+20.0)/120.0,2)), 20.0+10*i),)
+mdb.models['Model-1'].materials['Material-Matrix'].SpecificHeat(temperatureDependency=ON, table=tb1)
 mdb.models['Model-1'].materials['Material-Matrix'].Expansion(table=((9.1e-06,),))
 mdb.models['Model-1'].materials['Material-Matrix'].Conductivity(table=((1.25,),))
 mdb.models['Model-1'].materials['Material-Matrix'].conductivity.setValues(temperatureDependency=ON,
                                     table=((2.0, 20.0), (1.6, 300.0), (1.5, 400.0), (1.4, 500.0)))
 mdb.models['Model-1'].Material(name='Material-Aggregate')
-mdb.models['Model-1'].materials['Material-Aggregate'].Density(table=((2900.0,),))
+mdb.models['Model-1'].materials['Material-Aggregate'].Density(table=((3000.0,),))
 mdb.models['Model-1'].materials['Material-Aggregate'].Elastic(table=((40e9, 0.2),))
 mdb.models['Model-1'].materials['Material-Aggregate'].SpecificHeat(table=((900,),))
 mdb.models['Model-1'].materials['Material-Aggregate'].Expansion(table=((8.1e-06,),))
@@ -202,10 +194,10 @@ region = p.Set(cells=cells, name='Set-Matrix')
 p.SectionAssignment(region=region, sectionName='Section-Matrix', offset=0.0,
     offsetType=MIDDLE_SURFACE, offsetField='', thicknessAssignment=FROM_SECTION)
 # 分析步设置
-mdb.models['Model-1'].HeatTransferStep(name='Step-1', previous='Initial', timePeriod=300, maxNumInc=10000,
-                                       initialInc=0.01, minInc=1e-5, maxInc=10, deltmx=10, amplitude=STEP)
+mdb.models['Model-1'].HeatTransferStep(name='Step-1', previous='Initial', timePeriod=300, maxNumInc=100000,
+                                       initialInc=0.01, minInc=1e-6, maxInc=100, deltmx=10, amplitude=STEP)
 # 场输出设置
-mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(variables=('NT', 'TEMP', 'HFL', 'RFL'))
+mdb.models['Model-1'].fieldOutputRequests['F-Output-1'].setValues(variables=('NT', 'TEMP', 'HFL'))
 regionDef=mdb.models['Model-1'].rootAssembly.allInstances['Part-1-1'].sets['Set-Matrix']
 mdb.models['Model-1'].HistoryOutputRequest(name='H-Output-1',
     createStepName='Step-1', variables=('NT', ), frequency=LAST_INCREMENT,
@@ -219,7 +211,7 @@ mdb.models['Model-1'].TabularAmplitude(name='Amp-1', timeSpan=STEP, smooth=SOLVE
 a = mdb.models['Model-1'].rootAssembly
 s1 = a.instances['Part-1-1'].faces
 side1Faces1 = s1[0:6]
-region = a.Surface(side1Faces=side1Faces1, name='Surf-all')
+region = a.Surface(side1Faces=side1Faces1, name='Surf-ALL')
 mdb.models['Model-1'].FilmCondition(name='Int-surChange',
                                     createStepName='Step-1', surface=region, definition=EMBEDDED_COEFF,
                                     filmCoeff=12, filmCoeffAmplitude='', sinkTemperature=1.0,
@@ -235,7 +227,7 @@ a = mdb.models['Model-1'].rootAssembly
 region = a.instances['Part-1-1'].sets['Set-All']
 mdb.models['Model-1'].Temperature(name='Predefined Field-1',
     createStepName='Initial', region=region, distributionType=UNIFORM,
-    crossSectionDistribution=CONSTANT_THROUGH_THICKNESS, magnitudes=(20.0, ))
+    crossSectionDistribution=CONSTANT_THROUGH_THICKNESS, magnitudes=(IT, ))
 # 定义网格属性
 elemType1 = mesh.ElemType(elemCode=DC3D8, elemLibrary=STANDARD)
 elemType2 = mesh.ElemType(elemCode=DC3D6, elemLibrary=STANDARD)
@@ -256,4 +248,7 @@ NME = len(a1.sets['Set-Matrix'].elements)
 NAE = len(a1.sets['Set-Balls'].elements)
 excel_name = "E:/Abaqus/Code/CycleOutputFile/NNE.xlsx"
 # get_node_coord(excel_name)
-mdb.saveAs(pathName='E:/Abaqus/Workpace/Model-temp01.cae')
+logging.info("nord_coord done")
+mdb.saveAs(pathName='E:/Abaqus/Workpace/Model-Temp01.cae')
+logging.info("saved!!")
+# done
