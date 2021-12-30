@@ -82,6 +82,8 @@ def vapor2_display():
 
 def output_png(state):
     # 输出文件
+    session.viewports['Viewport: 1'].maximize()
+    session.viewports['Viewport: 1'].view.setValues(fieldOfViewAngle=50)
     session.viewports['Viewport: 1'].odbDisplay.setValues(viewCut=ON)
     session.printToFile(fileName=target_dir+'/step{}/{}-1mm.png'.format(i + 1, state),
                         format=PNG,
