@@ -8,11 +8,6 @@ from odbAccess import *
 from visualization import *
 import os
 import openpyxl
-import math
-import time
-import sys
-import logging
-import numpy as np
 
 
 def vapor1_display():
@@ -46,6 +41,8 @@ def vapor1_display():
     session.pngOptions.setValues(imageSize=(4096, 2057))
     session.viewports['Viewport: 1'].odbDisplay.contourOptions.setValues(maxValue=35, minAutoCompute=OFF, minValue=0.1)
     output_png("begin")
+    wb.close()
+    del mdb.models['Model-1'].analyticalFields['AnalyticalField-1']
 
 
 def vapor2_display():
@@ -79,21 +76,27 @@ def vapor2_display():
     session.pngOptions.setValues(imageSize=(4096, 2057))
     session.viewports['Viewport: 1'].odbDisplay.contourOptions.setValues(maxValue=35, minAutoCompute=OFF, minValue=0.1)
     output_png("final")
+    wb.close()
+    del mdb.models['Model-1'].analyticalFields['AnalyticalField-2']
 
 
 def output_png(state):
     # 输出文件
-    os.mkdir('E:/Abaqus/Code/CycleOutputFile/Display/step{}'.format(i + 1, state))
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/{}-1mm.png'.format(state), format=PNG,
+    session.viewports['Viewport: 1'].odbDisplay.setValues(viewCut=ON)
+    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-1mm.png'.format(i + 1, state),
+                        format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.03)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/{}-3mm.png'.format(state), format=PNG,
+    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-3mm.png'.format(i + 1, state),
+                        format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.05)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/{}-5mm.png'.format(state), format=PNG,
+    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-5mm.png'.format(i + 1, state),
+                        format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.1)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/{}-10mm.png'.format(state), format=PNG,
+    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-10mm.png'.format(i + 1, state),
+                        format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     leaf = dgo.LeafFromModelElemLabels(elementLabels=get_element())
     session.viewports['Viewport: 1'].odbDisplay.displayGroup.remove(leaf=leaf)
@@ -107,20 +110,21 @@ def get_element():
 
 
 files = os.listdir("E:/Abaqus/Code/CycleOutputFile/12-23")
-# for i in range(len(files)):
-for i in range(1):
-    Mdb()
-    session.journalOptions.setValues(replayGeometry=INDEX, recoverGeometry=INDEX)
-    path_name = "E:/Abaqus/Workpace/Myfile12-30-10/Model-Temp01.cae"
-    mdb = openMdb(pathName=path_name)
-    a1 = mdb.models['Model-1'].rootAssembly.instances['Part-1-1']
-    NN = len(a1.nodes.getByBoundingBox(-1, -1, 0, 1, 1, 1))  # 全部节点个数
-    NE = len(a1.elements.getByBoundingBox(-1, -1, 0, 1, 1, 1))  # 全部单元个数
-    NAN = len(a1.sets['Set-Balls'].nodes)  # 骨料节点个数
-    NMN = len(a1.sets['Set-Matrix'].nodes)  # 基质节点个数
-    SN = len(mdb.models['Model-1'].rootAssembly.allSurfaces['Surf-ALL'].nodes)  # 表面节点个数
-    NME = len(a1.sets['Set-Matrix'].elements)  # 基质单元个数
-    NAE = len(a1.sets['Set-Balls'].elements)  # 骨料单元个数
-    this_excel = "E:/Abaqus/Code/CycleOutputFile/12-30/Step{}.xlsx".format(12)
+session.journalOptions.setValues(replayGeometry=INDEX, recoverGeometry=INDEX)
+path_name = "E:/Abaqus/Workpace/Myfile12-30-10/Model-Temp01.cae"
+mdb = openMdb(pathName=path_name)
+a1 = mdb.models['Model-1'].rootAssembly.instances['Part-1-1']
+NN = len(a1.nodes.getByBoundingBox(-1, -1, 0, 1, 1, 1))  # 全部节点个数
+NE = len(a1.elements.getByBoundingBox(-1, -1, 0, 1, 1, 1))  # 全部单元个数
+NAN = len(a1.sets['Set-Balls'].nodes)  # 骨料节点个数
+NMN = len(a1.sets['Set-Matrix'].nodes)  # 基质节点个数
+SN = len(mdb.models['Model-1'].rootAssembly.allSurfaces['Surf-ALL'].nodes)  # 表面节点个数
+NME = len(a1.sets['Set-Matrix'].elements)  # 基质单元个数
+NAE = len(a1.sets['Set-Balls'].elements)  # 骨料单元个数
+for i in range(len(files)):
+    this_excel = "E:/Abaqus/Code/CycleOutputFile/12-30/Step{}.xlsx".format(i + 1)
+    png_path = 'E:/Abaqus/Code/CycleOutputFile/Display/step{}'.format(i + 1)
+    if not os.path.exists(png_path):
+        os.mkdir(png_path)
     vapor1_display()
     vapor2_display()
