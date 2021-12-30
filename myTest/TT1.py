@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import logging
-logging.basicConfig(filename='example.log',level=logging.DEBUG)
-logging.debug("This message should go to the log file")
-logging.info("So should this")
-logging.warning("And this,too{}".format(2+1))
-
+target_dir = "E:/Abaqus/Code/CycleOutputFile/12-30"
+m= target_dir+'/step{}/{}-1mm.png'
+print (m)
 
 

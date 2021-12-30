@@ -83,19 +83,19 @@ def vapor2_display():
 def output_png(state):
     # 输出文件
     session.viewports['Viewport: 1'].odbDisplay.setValues(viewCut=ON)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-1mm.png'.format(i + 1, state),
+    session.printToFile(fileName=target_dir+'/step{}/{}-1mm.png'.format(i + 1, state),
                         format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.03)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-3mm.png'.format(i + 1, state),
+    session.printToFile(fileName=target_dir+'/step{}/{}-3mm.png'.format(i + 1, state),
                         format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.05)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-5mm.png'.format(i + 1, state),
+    session.printToFile(fileName=target_dir+'/step{}/{}-5mm.png'.format(i + 1, state),
                         format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     session.viewports['Viewport: 1'].odbDisplay.viewCuts['X-Plane'].setValues(position=0.1)
-    session.printToFile(fileName='E:/Abaqus/Code/CycleOutputFile/Display/step{}/{}-10mm.png'.format(i + 1, state),
+    session.printToFile(fileName=target_dir+'/step{}/{}-10mm.png'.format(i + 1, state),
                         format=PNG,
                         canvasObjects=(session.viewports['Viewport: 1'],))
     leaf = dgo.LeafFromModelElemLabels(elementLabels=get_element())
@@ -109,7 +109,8 @@ def get_element():
     return elements
 
 
-files = os.listdir("E:/Abaqus/Code/CycleOutputFile/12-23")
+target_dir = "E:/Abaqus/Code/CycleOutputFile/12-30"
+files = os.listdir(target_dir)
 session.journalOptions.setValues(replayGeometry=INDEX, recoverGeometry=INDEX)
 path_name = "E:/Abaqus/Workpace/Myfile12-30-10/Model-Temp01.cae"
 mdb = openMdb(pathName=path_name)
@@ -122,8 +123,8 @@ SN = len(mdb.models['Model-1'].rootAssembly.allSurfaces['Surf-ALL'].nodes)  # �
 NME = len(a1.sets['Set-Matrix'].elements)  # 基质单元个数
 NAE = len(a1.sets['Set-Balls'].elements)  # 骨料单元个数
 for i in range(len(files)):
-    this_excel = "E:/Abaqus/Code/CycleOutputFile/12-30/Step{}.xlsx".format(i + 1)
-    png_path = 'E:/Abaqus/Code/CycleOutputFile/Display/step{}'.format(i + 1)
+    this_excel = target_dir+"/Step{}.xlsx".format(i + 1)
+    png_path = target_dir+'/step{}'.format(i + 1)
     if not os.path.exists(png_path):
         os.mkdir(png_path)
     vapor1_display()
