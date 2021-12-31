@@ -764,7 +764,7 @@ def calc_mass(massCae):
             elemvp[i][5] = 1.0 / elemvp[i][2] / (elemp[i][3] + 273.15) * elemdh[i][17] * (1.0 - elemvp[i][8])
             elemvp[i][9] = 1.0 / (0.4614 * elemvp[i][2] * (elemp[i][3] + 273.15))  # 1/ZRT
             # 等效热传导率计算
-            elemvp[i][6] = elempe[i][7] / elemvp[i][3] / elemvp[i][1] * 800
+            elemvp[i][6] = elempe[i][7] / elemvp[i][3] / elemvp[i][1] * 900
 
     # 定义输出步骤
     def output_result(odb_name):
@@ -893,7 +893,7 @@ def calc_mass(massCae):
     # 等效热导率
     mdb.models['Model-Mass-1'].materials['Material-Aggregate'].conductivity.setValues(table=((1e-19,),))
     # 等效密度
-    mdb.models['Model-Mass-1'].materials['Material-Aggregate'].density.setValues(table=((0.4614e2,),))
+    mdb.models['Model-Mass-1'].materials['Material-Aggregate'].density.setValues(table=((0.4614,),))
     # 等效比容
     mdb.models['Model-Mass-1'].materials['Material-Aggregate'].specificHeat.setValues(table=((1e2 / (MT + 273.15),),))
     # 撤除相互作用
@@ -918,10 +918,6 @@ def calc_mass(massCae):
     for i in range(NME):
         vapor_point1 += ((sheet.cell(i + 2, 6).value, sheet.cell(i + 2, 7).value, sheet.cell(i + 2, 8).value,
                           sheet.cell(i + 2, 13).value),)
-    # for sn in range(SN):
-    #     vapor_point1 += (
-    #         (a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[0], a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[1],
-    #          a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[2], 0.1),)
     mdb.models['Model-Mass-1'].MappedField(name='AnalyticalField-1',
                                            description='', regionType=POINT, partLevelData=False, localCsys=None,
                                            pointDataFormat=XYZ, fieldDataType=SCALAR, xyzPointData=vapor_point1)
