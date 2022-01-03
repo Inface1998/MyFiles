@@ -7,7 +7,7 @@ import imageio, os
 
 def generate_gif(state, dis):
     images = []
-    target_dir = "E:/Abaqus/Code/CycleOutputFile/12-30"
+    target_dir = "E:/Abaqus/Code/CycleOutputFile/1-3-16"
     for n in range(32):
         file_name = target_dir + '/step{}/{}-{}mm.png'.format(n + 1, state, dis)
         images.append(imageio.imread(file_name))

@@ -183,7 +183,7 @@ side_length = 0.1
 # 创建骨料
 data_aggregate = []  # 骨料信息
 # 1.建立10~15mm的骨料
-aggregate_date(0.01/2, 0.015/2, 0.12)
+aggregate_date(0.01, 0.015, 0.12)
 # # 2.建立5~10mm的骨料
 # aggregate_date(0.005/2, 0.01/2, 0.08)
 

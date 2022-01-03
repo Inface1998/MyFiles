@@ -247,7 +247,7 @@ NE = len(a1.elements.getByBoundingBox(-1, -1, 0, 1, 1, 1))
 NME = len(a1.sets['Set-Matrix'].elements)
 NAE = len(a1.sets['Set-Balls'].elements)
 excel_name = "E:/Abaqus/Code/CycleOutputFile/NNE.xlsx"
-# get_node_coord(excel_name)
+get_node_coord(excel_name)
 logging.info("nord_coord done")
 mdb.saveAs(pathName='E:/Abaqus/Workpace/Model-Temp01.cae')
 logging.info("saved!!")

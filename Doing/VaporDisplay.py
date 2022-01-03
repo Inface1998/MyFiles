@@ -14,13 +14,17 @@ def vapor1_display():
     wb = openpyxl.load_workbook(this_excel)
     sheet = wb["MElement"]
     vapor_point = ()
+    a = mdb.models['Model-1'].rootAssembly
     for i in range(NME):
         vapor_point += ((sheet.cell(i + 2, 6).value, sheet.cell(i + 2, 7).value, sheet.cell(i + 2, 8).value,
                          sheet.cell(i + 2, 13).value),)
+    for sn in range(SN):
+        vapor_point += (
+            (a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[0], a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[1],
+             a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[2], 0.1),)
     mdb.models['Model-1'].MappedField(name='AnalyticalField-1',
                                       description='', regionType=POINT, partLevelData=False, localCsys=None,
                                       pointDataFormat=XYZ, fieldDataType=SCALAR, xyzPointData=vapor_point)
-    a = mdb.models['Model-1'].rootAssembly
     c1 = a.instances['Part-1-1'].cells
     np = len(c1)
     cells1 = c1[np - 1:np]
@@ -49,13 +53,17 @@ def vapor2_display():
     wb = openpyxl.load_workbook(this_excel)
     sheet = wb["MElement"]
     vapor_point = ()
+    a = mdb.models['Model-1'].rootAssembly
     for i in range(NME):
         vapor_point += ((sheet.cell(i + 2, 6).value, sheet.cell(i + 2, 7).value, sheet.cell(i + 2, 8).value,
                          sheet.cell(i + 2, 19).value),)
+    for sn in range(SN):
+        vapor_point += (
+            (a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[0], a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[1],
+             a.allSurfaces['Surf-ALL'].nodes[sn].coordinates[2], 0.1),)
     mdb.models['Model-1'].MappedField(name='AnalyticalField-2',
                                       description='', regionType=POINT, partLevelData=False, localCsys=None,
                                       pointDataFormat=XYZ, fieldDataType=SCALAR, xyzPointData=vapor_point)
-    a = mdb.models['Model-1'].rootAssembly
     c1 = a.instances['Part-1-1'].cells
     np = len(c1)
     cells1 = c1[np - 1:np]
@@ -111,7 +119,7 @@ def get_element():
     return elements
 
 
-target_dir = "E:/Abaqus/Code/CycleOutputFile/12-30"
+target_dir = "E:/Abaqus/Code/CycleOutputFile/1-3-16"
 files = os.listdir(target_dir)
 session.journalOptions.setValues(replayGeometry=INDEX, recoverGeometry=INDEX)
 path_name = "E:/Abaqus/Workpace/Myfile12-30-10/Model-Temp01.cae"

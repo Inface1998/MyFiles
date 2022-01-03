@@ -528,12 +528,14 @@ def calc_vapor(flag):
             sheet.cell(1, 18, "VaporType2")
             sheet.cell(1, 19, "Vapor2")
             sheet.cell(1, 20, "LW-SDegree2")
+            sheet.cell(1, 21, "MoisContent2")
             for i in range(NME):
                 sheet.cell(i + 2, 16, elemp[i][7])
                 sheet.cell(i + 2, 17, elemvp[i][3])
                 sheet.cell(i + 2, 18, elemp[i][12])
                 sheet.cell(i + 2, 19, elemp[i][8])
                 sheet.cell(i + 2, 20, elemvp[i][8])
+                sheet.cell(i + 2, 21, 1.0 / elemp[i][7] / 1e3)
         wbb.save(this_excel)
         wbb.close()
 
@@ -764,7 +766,7 @@ def calc_mass(massCae):
             elemvp[i][5] = 1.0 / elemvp[i][2] / (elemp[i][3] + 273.15) * elemdh[i][17] * (1.0 - elemvp[i][8])
             elemvp[i][9] = 1.0 / (0.4614 * elemvp[i][2] * (elemp[i][3] + 273.15))  # 1/ZRT
             # 等效热传导率计算
-            elemvp[i][6] = elempe[i][7] / elemvp[i][3] / elemvp[i][1] * 900
+            elemvp[i][6] = elempe[i][7] / elemvp[i][3] / elemvp[i][1] * 800
 
     # 定义输出步骤
     def output_result(odb_name):
@@ -910,7 +912,7 @@ def calc_mass(massCae):
     # 定义预定义场
     del mdb.models['Model-Mass-1'].predefinedFields['Predefined Field-1']
     # 增量步修改
-    mdb.models['Model-Mass-1'].steps['Step-1'].setValues(minInc=1e-08, deltmx=1.0)
+    # mdb.models['Model-Mass-1'].steps['Step-1'].setValues(minInc=1e-08, deltmx=1.0)
     # 定义映射场
     wb = openpyxl.load_workbook(this_excel)
     sheet = wb["MElement"]
@@ -925,9 +927,9 @@ def calc_mass(massCae):
     np = len(c1)
     cells1 = c1[np - 1:np]
     # 为基质赋予初始蒸气压
-    region = regionToolset.Region(cells=cells1)
+    region1 = regionToolset.Region(cells=cells1)
     mdb.models['Model-Mass-1'].Temperature(name='Initial-vapor-matrix',
-                                           createStepName='Initial', region=region, distributionType=FIELD,
+                                           createStepName='Initial', region=region1, distributionType=FIELD,
                                            crossSectionDistribution=CONSTANT_THROUGH_THICKNESS,
                                            field='AnalyticalField-1', magnitudes=(1.0,))
     # 为骨料赋予初始蒸气压
@@ -938,10 +940,10 @@ def calc_mass(massCae):
     mdb.models['Model-Mass-1'].MappedField(name='AnalyticalField-2',
                                            description='', regionType=POINT, partLevelData=False, localCsys=None,
                                            pointDataFormat=XYZ, fieldDataType=SCALAR, xyzPointData=vapor_point2)
-    cells1 = c1[0:np - 1]
-    region = regionToolset.Region(cells=cells1)
+    cells2 = c1[0:np - 1]
+    region2 = regionToolset.Region(cells=cells2)
     mdb.models['Model-Mass-1'].Temperature(name='Initial-vapor-balls',
-                                           createStepName='Initial', region=region, distributionType=FIELD,
+                                           createStepName='Initial', region=region2, distributionType=FIELD,
                                            crossSectionDistribution=CONSTANT_THROUGH_THICKNESS,
                                            field='AnalyticalField-2', magnitudes=(1.0,))
     wb.close()
