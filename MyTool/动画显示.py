@@ -1,8 +1,7 @@
 # -*- coding: UTF-8 -*-    
 # 作者：zhangHJ
 # 日期：2021/12/31  10:09
-import matplotlib.pyplot as plt
-import imageio, os
+import imageio
 
 
 def generate_gif(state, dis):
@@ -16,6 +15,6 @@ def generate_gif(state, dis):
 
 name_list = ["begin", "final"]
 dis_list = [1, 3, 5, 10]
-for i in range[len(name_list)]:
-    for j in range[len(dis_list)]:
+for i in range(len(name_list)):
+    for j in range(len(dis_list)):
         generate_gif(name_list[i], dis_list[j])
