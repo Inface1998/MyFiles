@@ -5,17 +5,17 @@ print (m)
 vapor_table = "E:/Abaqus/Code/CycleInputFile/VaporTable.xlsx"
 
 # 等效热导率
-mdb.models['Model-1'].materials['Material-Aggregate'].conductivity.setValues(table=((1e-19,),))
+mdb.models['Model-1'].materials['Material-Aggregate'].conductivity.setValues(table=((1e-19,),),temperatureDependency=OFF)
 # 等效密度
-mdb.models['Model-1'].materials['Material-Aggregate'].density.setValues(table=((0.4614,),))
+mdb.models['Model-1'].materials['Material-Aggregate'].density.setValues(table=((0.4614,),),temperatureDependency=OFF)
 # 等效比容
-mdb.models['Model-1'].materials['Material-Aggregate'].specificHeat.setValues(table=((1e2 / (500 + 273.15),),))
+mdb.models['Model-1'].materials['Material-Aggregate'].specificHeat.setValues(table=((1e2 / (300 + 273.15),),),temperatureDependency=OFF)
 # 等效热导率
-mdb.models['Model-1'].materials['Material-Matrix'].conductivity.setValues(table=((2.96e-11,),))
+mdb.models['Model-1'].materials['Material-Matrix'].conductivity.setValues(table=((4.29e-13,),),temperatureDependency=OFF)
 # 等效密度
-mdb.models['Model-1'].materials['Material-Matrix'].density.setValues(table=((0.4614,),))
+mdb.models['Model-1'].materials['Material-Matrix'].density.setValues(table=((0.4614,),),temperatureDependency=OFF)
 # 等效比容
-mdb.models['Model-1'].materials['Material-Matrix'].specificHeat.setValues(table=((0.0002253,),))
+mdb.models['Model-1'].materials['Material-Matrix'].specificHeat.setValues(table=((1.13e-5,),),temperatureDependency=OFF)
 
 
 

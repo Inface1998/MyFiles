@@ -229,16 +229,14 @@ mdb.models['Model-1'].Temperature(name='Predefined Field-1',
     createStepName='Initial', region=region, distributionType=UNIFORM,
     crossSectionDistribution=CONSTANT_THROUGH_THICKNESS, magnitudes=(IT, ))
 # 定义网格属性
-elemType1 = mesh.ElemType(elemCode=DC3D8, elemLibrary=STANDARD)
-elemType2 = mesh.ElemType(elemCode=DC3D6, elemLibrary=STANDARD)
 elemType3 = mesh.ElemType(elemCode=DC3D4, elemLibrary=STANDARD)
 c = p.cells
 cells = c[0:na+1]
 pickedRegions =(cells, )
-p.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,elemType3))
+p.setElementType(regions=pickedRegions, elemTypes=(elemType3,))
 pickedRegions = c[0:na+1]
 p.setMeshControls(regions=pickedRegions, elemShape=TET, technique=FREE)
-p.seedPart(size=0.01, deviationFactor=0.1, minSizeFactor=0.1)
+p.seedPart(size=0.02, deviationFactor=0.1, minSizeFactor=0.1)
 p.generateMesh()
 a.regenerate()
 a1 = mdb.models['Model-1'].rootAssembly.instances['Part-1-1']
