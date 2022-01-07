@@ -1025,6 +1025,47 @@ def upgrade_info():
             elemdh[i][10] = sheet1.cell(i + 2, 4).value
         wb.close()
 
+
+def node_info(excel):
+    def info_output(n1, n2, label,sheet):
+        """
+        This is a groups style docs.
+        Parameters:
+          param1 - input column
+          param2 - output column
+          param3 - output target name
+          param3 - input sheet
+        """
+        data = [[] for n in range(NN)]
+        count = 2
+        sheet2.cell(count - 1, n2, label)
+        for i in range(2, 101):
+            value = sheet.cell(i, n1).value
+            for j in range(2, 6):
+                nodeLabel = sheet1.cell(i, j).value
+                data[nodeLabel].append(value)
+        for item in data:
+            if len(item) == 0:
+                result = 0
+            else:
+                result = sum(item) / len(item)
+            sheet2.cell(count, n2, result)
+            count = count + 1
+
+    wb = openpyxl.load_workbook(excel)
+    sheet1 = wb["MElement"]
+    sheet2 = wb["AllNode"]
+    sheet3 = wb["Element-VP-PE"]
+    sheet4 = wb["Element-DH"]
+    info_output(13, 8, "vapor1", sheet1)
+    info_output(19, 9, "vapor2", sheet1)
+    info_output(12, 10, "MMass1", sheet4)
+    info_output(18, 11, "MMass2", sheet3)
+    info_output(14, 12, "MLoss", sheet3)
+    wb.save(excel)
+    wb.close()
+
+
 def heat_source():
     # 1.读取未考虑湿气吸热前单步内的初始温度和末尾温度
     # 2.根据饱和蒸汽表中能量确定单步内初始温度和末尾温度的能量（温度小于100时假设只有液态水）
@@ -1032,6 +1073,7 @@ def heat_source():
     # 4.将单元附加比热加到原基质比热上建立新的材料属性
     # 5.提交作业进行计算
     return 0
+
 
 # ====================================正式计算============================================
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -1094,6 +1136,11 @@ for step in range(TS):
     logging.info("f-step:{}-calcVapor-step-".format(step + 1))
     calc_vapor(True)
     logging.info("step:{}-calc_done-step-step-".format(step + 1))
+    # g.输出结点相关数据
+    logging.info("g-step:{}-output_node_info-step-".format(step + 1))
+    node_info(this_excel)
+    if MT >= 600:
+        break
     if step == TS - 1:
         logging.info("ALL  DONE!!!")
 
