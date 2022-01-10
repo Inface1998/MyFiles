@@ -17,16 +17,20 @@ import numpy as np
 """
 	double elemp[EN][]={0.0};	//elemp[][0]-elem number;
 								//elemp[][1-2]- 
-								//elemp[][3]-the mean element temperature=(elemp[][4]+elemp[][5])/2;
-								//elemp[][4]-last time step element temperature(oC); 
+								//elemp[][3]-the mean element temperature=(elemp[i][4]+elemp[][5])/2;
+								//elemp[i][4]-last time step element temperature(oC); 
 								//elemp[][5]-element temperature at each time step(oC) 
 								//elemp[][6]-
 								//elemp[i][7]-specific volume of vapor and liquid water mixture(m3/kg)(before mass)
 								//elemp[i][8]-element vapor presure(MPa);
 								//elemp[][9,10,11]-damage parameters and the damage angle in the local coordinate-system(D1e,D2e,Q)
 								//elemp[][12]-the type of vapor,0-water,1-saturated water,2-data gap,3-superheated steam
-                                //-elemp[][13]-material strength (MPa)
-                                //-elemp[][14]-damage parameter of E_modulus by dehydration/decomposition
+                                //-elemp[i][13]-material strength (MPa)
+                                //-elemp[i][14]-damage parameter of E_modulus by dehydration/decomposition
+                                //-elemp[i][15]-this step initial liquid water mass
+                                //-elemp[i][16]-this step initial vapor water mass
+                                //-elemp[i][17]-this step final liquid water mass
+                                //-elemp[i][18]-this step final vapor water mass
 
 	double elemdh[EN][]={0.0};//elemdh[i][0]-the total amount of moisture transported per unit volume of hcp before this time step(Kg/m3)
 								//elemdh[][1]-initial volume fraction of normal C-S-H;
@@ -40,13 +44,13 @@ import numpy as np
 								//elemdh[][9]-conversion degree of CH;
 								//elemdh[][10]-conversion degree of C-S-H;
                                 //elemdh[][11]-porosity increased because of dehydration;
-								//elemdh[][12]-water released by dehydration (mole) per unit volume of hcp(mol/cm3);								
+								//elemdh[i][12]-water released by dehydration (mole) per unit volume of hcp(mol/cm3);								
 								//elemdh[][13]-volume fraction of normal C-S-H after dehydration of this time step (including the gel pore);
 								//elemdh[][14]-volume fraction of pozzolanic C-S-H after dehydration of this time step (including the gel pore);
 								//elemdh[][15]-volume fraction of CH after dehydration of this time step;
 								//elemdh[][16]-volume fraction of AFt after dehydration of this time step(including the dehydration product);		
-								//elemdh[][17]-volume fraction of capillary pores after dehydration of this time step;
-								//elemdh[i][18]-the mass of liquid and vapor mixture per unit volume of hcp(g/cm3); 
+								//elemdh[i][17]-volume fraction of capillary pores after dehydration of this time step;
+								//elemdh[i][18]-Moisture-Mass1 the mass of liquid and vapor mixture per unit volume of hcp(g/cm3); 
 								//elemdh[i][19]-porosity increased by full dehydration(the degree of dehydration=1.0 );
 								//elemdh[i][20]-degree of dehydration=porosity increased by dehydration/porosity increased by full dehydration
 												//the value is between 0.0~1.0
@@ -71,15 +75,19 @@ import numpy as np
 								//elemvp[i][5]-element equivalent thermal capacity for mass transport analysis
 								//elemvp[i][6]-element equivalent thermal conductivity (permeability) for mass transport analysis
 								//elemvp[i][7]-element vapor slippage flow factor b (MPa)0
-								//elemvp[i][8]-liquid water saturation degree for relative permeability calculation
+								//elemvp[i][8]-LW-SDegree 12 == liquid water saturation degree for relative permeability calculation
 								//elemvp[i][9]-1/ZRT for the mass migration analysis in the mechanical analysis
 								//elemvp[i][10] --element vapor pressure drop because of mass transport (MPa)
 								//elemvp[i][11] --vapor density change because of mass transport (kg/m3)
 								//elemvp[i][12] --specific volume of vapor and liquid water mixture(m3/kg)(after mass)
 								//elemvp[i][13] --the amount of mass change per unit volume of hcp of this time step (kg/m3)
 								//elemvp[i][14] --the total amount of mass transported per unit volume of hcp after this time step (kg/m3)
-								//elemvp[i][15] --moisture content,if the moisture is converted to liquid water,the volume fraction of capillary pores filled with water
+								//elemvp[i][15] --Moisture-SDgree1 == moisture  saturation degree,if the moisture is converted to liquid water,the volume fraction of capillary pores filled with water
 								//elemvp[i][16] --expand coefficient for mass modify
+								//elemvp[i][17] --density of liquid water in specific temperature
+								//elemvp[i][18] --Moisture-Mass2   --> second elemdh[i][18]   
+								//elemvp[i][19] --Moisture-SDgree2 -----moisture  saturation degree
+								
 """
 
 
@@ -379,7 +387,7 @@ def calc_decomposition():
         elemdh[i][16] = elemdh[i][4] * (1.0 - elemdh[i][8])
         elemdh[i][17] = elemdh[i][7] + elemdh[i][11]
         elemdh[i][0] = 0 if step == 0 else sheet3.cell(i + 2, 15).value  # 等于上一步的 elemvp[i][14]
-        elemdh[i][23] = (elemdh[i][7] * Sd + 18 * elemdh[i][12]) * 1000  # attention---(kg/m3)
+        elemdh[i][23] = (elemdh[i][7] * Sd + 18 * elemdh[i][12]) * 1000  # (g/cm3 ---> kg/m3)
         elemdh[i][18] = elemdh[i][23] + elemdh[i][0]  # (kg/m3)
         # unhydrated cement 、silica fume and hydrated product of AFt、CH、CSH
         elemdh[i][22] = elemdh[i][5] + elemdh[i][6] + elemdh[i][4] * elemdh[i][8] * 0.48367 + \
@@ -471,7 +479,7 @@ def calc_decomposition():
     sheet.cell(1, 9, "VF-CH")  # elemdh[i][15]
     sheet.cell(1, 10, "VF-AFt")  # elemdh[i][16]
     sheet.cell(1, 11, "VF-CP")  # elemdh[i][17]
-    sheet.cell(1, 12, "MoisMass")  # elemdh[i][18]
+    sheet.cell(1, 12, "MoisMass1")  # elemdh[i][18]
     sheet.cell(1, 13, "Fullncrease-CP")  # elemdh[i][19]
     sheet.cell(1, 14, "DehyDegree")  # elemdh[i][20]
     sheet.cell(1, 15, "CriticlPore-D")  # elemdh[i][21]
@@ -516,31 +524,46 @@ def calc_vapor(flag):
             sheet.cell(1, 12, "VaporType1")
             sheet.cell(1, 13, "Vapor1")
             sheet.cell(1, 14, "TEMP_AVRG")
+            sheet.cell(1, 15, "LMass1")
+            sheet.cell(1, 16, "VMass1")
             for i in range(NME):
                 sheet.cell(i + 2, 10, elemp[i][7])
                 sheet.cell(i + 2, 11, elemvp[i][3])
                 sheet.cell(i + 2, 12, elemp[i][12])
                 sheet.cell(i + 2, 13, elemp[i][8])
                 sheet.cell(i + 2, 14, elemp[i][3])
+                elemp[i][15] = elemdh[i][17] * elemvp[i][8]
+                elemp[i][16] = elemdh[i][18] - elemp[i][15]
+                sheet.cell(i + 2, 15, elemp[i][15])
+                sheet.cell(i + 2, 16, elemp[i][16])
         else:
-            sheet.cell(1, 16, "SpecificV2")
-            sheet.cell(1, 17, "DynamicV2")
-            sheet.cell(1, 18, "VaporType2")
-            sheet.cell(1, 19, "Vapor2")
-            sheet.cell(1, 20, "LW-SDegree2")
-            sheet.cell(1, 21, "MoisContent2")
+            sheet.cell(1, 19, "SpecificV2")
+            sheet.cell(1, 20, "DynamicV2")
+            sheet.cell(1, 21, "VaporType2")
+            sheet.cell(1, 22, "Vapor2")
+            sheet.cell(1, 23, "LW-SDegree2")
+            sheet.cell(1, 24, "M-SDegree2")
+            sheet.cell(1, 25, "LMass2")
+            sheet.cell(1, 26, "VMass2")
             for i in range(NME):
-                sheet.cell(i + 2, 16, elemp[i][7])
-                sheet.cell(i + 2, 17, elemvp[i][3])
-                sheet.cell(i + 2, 18, elemp[i][12])
-                sheet.cell(i + 2, 19, elemp[i][8])
-                sheet.cell(i + 2, 20, elemvp[i][8])
-                sheet.cell(i + 2, 21, 1.0 / elemp[i][7] / 1e3)
+                sheet.cell(i + 2, 19, elemp[i][7])
+                sheet.cell(i + 2, 20, elemvp[i][3])
+                sheet.cell(i + 2, 21, elemp[i][12])
+                sheet.cell(i + 2, 22, elemp[i][8])
+                sheet.cell(i + 2, 23, elemvp[i][8])
+                elemvp[i][19] = 1.0 / elemp[i][7] / 1e3
+                sheet.cell(i + 2, 24, elemvp[i][19])
+                elemp[i][17] = elemdh[i][17] * elemvp[i][8]
+                elemp[i][18] = elemdh[i][18] - elemp[i][17]
+                sheet.cell(i + 2, 25, elemp[i][17])
+                sheet.cell(i + 2, 26, elemp[i][18])
         wbb.save(this_excel)
         wbb.close()
 
     logging.info("calc_vapor: flag" + str(flag))
     # 正式计算蒸气压
+    # 膨胀系数确定
+    get_coefficient()
     # 全局温度判断
     if MT <= 100:
         # 温度小于100度时此时比体积为1.6958
@@ -550,7 +573,7 @@ def calc_vapor(flag):
             elemp[i][12] = 0
             elemvp[i][1] = 1.6958  # 赋予气相比体积
             elemvp[i][3] = 12.02e-6  # 赋予动态粘度
-            elemvp[i][8] = elemdh[i][18] / elemdh[i][17] / 1000  # 赋予混合水饱和度
+            elemvp[i][8] = elemdh[i][18] / elemdh[i][17] / 1000  # 赋予混合水饱和度(g/cm3 ---> kg/m3)
         output_vapor(False)
         output_vapor(True)
         return
@@ -572,7 +595,7 @@ def calc_vapor(flag):
             elemp[i][12] = 0
             elemvp[i][1] = 1.6958  # 赋予气相比体积
             elemvp[i][3] = 12.02e-6  # 赋予动态粘度
-            elemvp[i][8] = elemdh[i][18] / elemdh[i][17] * 1e-3  # 赋予水饱和度
+            elemvp[i][8] = elemdh[i][18] / elemdh[i][17] / 1000  # 赋予水饱和度(g/cm3 ---> kg/m3)
             if elemvp[i][8] >= 1.0:
                 elemvp[i][8] = 0.999
         else:
@@ -589,7 +612,7 @@ def calc_vapor(flag):
                     elemvp[i][1] = lvg
                     elemvp[i][3] = interp(sheet1.cell(j + 1, 5).value, sheet1.cell(j + 2, 5).value,
                                           sheet1.cell(j + 1, 1).value, sheet1.cell(j + 2, 1).value, elemp[i][3])
-                    elemvp[i][8] = (elemp[i][7] - elemvp[i][1]) / elemp[i][7] / (1 - 1000 * elemvp[i][1])
+                    elemvp[i][8] = (elemp[i][7] - elemvp[i][1]) / elemp[i][7] / (1 - elemvp[j][17] * elemvp[i][1])
                     if elemvp[i][8] >= 1.0:
                         elemvp[i][8] = 0.999
                     break
@@ -708,6 +731,8 @@ def get_coefficient():
             if elemp[i][3] <= 100:
                 elemvp[i][16] = 1
                 break
+    for j in range(NME):
+        elemvp[j][17] = 1000.0 / elemvp[j][16]  # 1000 represent regular density of water
     wb.close()
 
 
@@ -728,7 +753,7 @@ def calc_mass(massCae):
             elemvp[i][11] = elemvp[i][10] * elemvp[i][9] * 1e3  # 蒸汽密度变化值
             # 计算湿传输（假设膨胀水消失）
             elemvp[i][13] = (1.0 - elemvp[i][8]) * elemdh[i][17] * elemvp[i][11] - (
-                    coefficient2 - coefficient1) * elemvp[i][8] * elemdh[i][17] * 1e3  # 此分析步中的质量传输
+                    coefficient2 - coefficient1) * elemvp[i][8] * elemdh[i][17] * elemvp[i][17]  # 此分析步中的质量传输
             mm = elemdh[i][18] + elemvp[i][13]  # 对此分析步湿传输后moisture mass计算
             if mm <= 0:
                 limit_volume = get_limit(i)
@@ -737,7 +762,8 @@ def calc_mass(massCae):
                 elemvp[i][13] = massNow - elemdh[i][18]
             elemdh[i][18] = elemdh[i][18] + elemvp[i][13]
             elemvp[i][14] = elemdh[i][0] + elemvp[i][13]  # 此分析步末的累计质量传输
-            elemvp[i][15] = 1.0 / elemp[i][7] / 1e3
+            elemvp[i][15] = 1.0 / elemp[i][7] / elemvp[i][17]  # 此分析步前的累计质量传输
+            elemvp[i][18] = elemdh[i][18]
         wbv.save(this_excel)
         wbv.close()
         wb2.close()
@@ -821,9 +847,9 @@ def calc_mass(massCae):
         # SpeVolume--AfterMassTransfer list later
         ws1.cell(1, 14, "ThisMChange")  # elemvp[i][13]
         ws1.cell(1, 15, "TotalMTrans")  # elemvp[i][14]
-        ws1.cell(1, 16, "MoisContent")  # elemvp[i][15]
+        ws1.cell(1, 16, "M-SDegree1)")  # elemvp[i][15]
         ws1.cell(1, 17, "WaterExpand")  # elemvp[i][16]
-        ws1.cell(1, 18, "After-MMass")  # elemdh[i][18]===mm
+        ws1.cell(1, 18, "MoisMass2")  # elemdh[i][18]===mm
         # output-----elempe
         ws1.cell(1, 21, "LV1P")  # elempe[i][1]
         ws1.cell(1, 22, "LV2P")  # elempe[i][2]
@@ -851,7 +877,8 @@ def calc_mass(massCae):
             ws1.cell(i + 2, 15, elemvp[i][14])
             ws1.cell(i + 2, 16, elemvp[i][15])
             ws1.cell(i + 2, 17, elemvp[i][16])
-            ws1.cell(i + 2, 18, elemdh[i][18])
+            ws1.cell(i + 2, 18, elemvp[i][17])
+            ws1.cell(i + 2, 19, elemvp[i][18])
             # output-----elempe
             ws1.cell(i + 2, 21, elempe[i][1])
             ws1.cell(i + 2, 22, elempe[i][2])
@@ -864,7 +891,6 @@ def calc_mass(massCae):
 
     # 正式计算
     logging.info("calc_mass")
-    get_coefficient()
     if MT <= 100:
         logging.info("no mass trans: step-" + str(step + 1))
         output_vppe()
@@ -1027,7 +1053,7 @@ def upgrade_info():
 
 
 def node_info(excel):
-    def info_output(n1, n2, label,sheet):
+    def info_output(n1, n2, label, sheet):
         """
         This is a groups style docs.
         Parameters:
@@ -1067,9 +1093,23 @@ def node_info(excel):
 
 
 def heat_source():
-    # 1.读取未考虑湿气吸热前单步内的初始温度和末尾温度
+    wb = openpyxl.load_workbook(vapor_table)
+    sheet1 = wb["SteamEnergy"]
+    # 未考虑湿气吸热前单步内的初始温度elemp[i][4]和末尾温度elemp[i][5]
+    # 1.根据excel结果确定单位体积基质液态水和气态水的质量
+    # 2.根据饱和蒸汽表中能量确定单步内初始温度和末尾温度的能量变化值
+    for i in range(NME):
+        # a.差值确定初始液态水和气态水单位质量的能量
+        for j in range(3, 51):
+            if sheet1.cell(j, 1).value <= elemp[i][4] <= sheet1.cell(j + 1, 1).value:
+                uf1 = interp(sheet1.cell(j, 5).value, sheet1.cell(j + 1, 5).value, sheet1.cell(j, 1).value,
+                             sheet1.cell(j + 1, 1).value, elemp[i][4])
+                ug1 = interp(sheet1.cell(j, 6).value, sheet1.cell(j + 1, 6).value, sheet1.cell(j, 1).value,
+                             sheet1.cell(j + 1, 1).value, elemp[i][4])
 
-    # 2.根据饱和蒸汽表中能量确定单步内初始温度和末尾温度的能量（温度小于100时假设只有液态水）
+        # a.确定初始液态水和气态水总能量
+
+        energy1 = elemp[i][15]
     # 3.对上述能量进行作差并除以（考虑湿气吸热前单步内的初始温度和末尾温度的差）得出附加比热
     # 4.将单元附加比热加到原基质比热上建立新的材料属性
     # 5.提交作业进行计算
@@ -1104,11 +1144,11 @@ CSH, pCSH, CH, AFt, CE, SF, CP, CPF, CP2, CP2D, CPAFt, CPCH, sf, hydc, hydsf, wc
 Sd, Dc0, Dc1, fvAFt, fvCH, fvCSH, inte, ftm, fta = cal_initial(excel_base)
 # 开始循环
 for step in range(TS):
-    elem = [[0.0 for i in range(6)] for j in range(NME)]
+    # elem = [[0.0 for i in range(6)] for j in range(NME)]
     elemdh = [[0.0 for i in range(25)] for j in range(NME)]
-    elemp = [[0.0 for i in range(15)] for j in range(NME)]
+    elemp = [[0.0 for i in range(17)] for j in range(NME)]
     elempe = [[0.0 for i in range(9)] for j in range(NME)]
-    elemvp = [[0.0 for i in range(17)] for j in range(NME)]
+    elemvp = [[0.0 for i in range(19)] for j in range(NME)]
     upgrade_info()
     lastTempOdb = 'Job-Temp0{}.odb'.format(step)
     lastTempCae = 'Model-Temp0{}.cae'.format(step)
