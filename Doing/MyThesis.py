@@ -994,6 +994,8 @@ def submit_job_a(LastTempCae,LastTempOdb,ThisTempCae):
             distributionType=FROM_FILE, fileName=LastTempOdb, beginStep=1,
             beginIncrement=get_increment(LastTempOdb))
     # 更改分析步
+    a1 = mdb.models['Model-1'].rootAssembly.instances['Part-1-1']
+    global a1
     mdb.models['Model-1'].steps['Step-1'].setValues(timePeriod=TG)
     # 更改温度幅值
     wb = openpyxl.load_workbook(initial_excel)
@@ -1091,7 +1093,7 @@ def node_info(excel):
     wb.close()
 
 
-def heat_source(excel,TempCae):
+def heat_source(excel_a,excel_b,TempCae):
     def create_model(LastTempCae,LastTempOdb):
         if step != 0:
             mdb = openMdb(pathName=LastTempCae)
@@ -1103,25 +1105,6 @@ def heat_source(excel,TempCae):
         global mdb
         mdb.Model(name='Model-2', objectToCopy=mdb.models['Model-1'])
         del mdb.models['Model-2'].parts['Part-1'].sectionAssignments[1]
-        # 更改分析步
-        mdb.models['Model-2'].steps['Step-1'].setValues(timePeriod=TG)
-        # 更改温度幅值
-        wb = openpyxl.load_workbook(initial_excel)
-        wb2 = openpyxl.load_workbook(excel_base)
-        sheet1 = wb['Sheet1']
-        sheet2 = wb2['Initial']
-        tbt = ()
-        count = 1
-        for t in range(int(TG / 5.0) + 1):
-            tbt = tbt + ((t * 5.0, float(sheet1.cell(t + 4 + step * int(TG / 5.0), 2).value)),)
-        for data in tbt:
-            sheet2.cell(count, 5, data[0])
-            sheet2.cell(count, 6, data[1])
-            count += 1
-        wb2.save(this_excel_a)
-        wb.close()
-        wb2.close()
-        mdb.models['Model-2'].amplitudes['Amp-1'].setValues(timeSpan=STEP, smooth=SOLVER_DEFAULT, data=tbt)
         # 对上述能量进行作差并除以（考虑湿气吸热前单步内的初始温度和末尾温度的差）得出附加比热
         # 将单元附加比热加到原基质比热上建立新的材料属性
         for i in range(NME):
@@ -1147,9 +1130,8 @@ def heat_source(excel,TempCae):
                                 offset=0.0, offsetType=MIDDLE_SURFACE, offsetField='',
                                 thicknessAssignment=FROM_SECTION)
 
-
     wb = openpyxl.load_workbook(vapor_table)
-    wb2 = openpyxl.load_workbook(excel)
+    wb2 = openpyxl.load_workbook(excel_a)
     sheet1 = wb["SteamEnergy"]
     st1 = wb2.create_sheet("HeatAbsorb", 0)
     # 未考虑湿气吸热前单步内的初始温度elemp[i][4]和末尾温度elemp[i][5]
@@ -1188,7 +1170,7 @@ def heat_source(excel,TempCae):
         st1.cell(i + 2, 4, ug2)
         st1.cell(i + 2, 5, energy1)
         st1.cell(i + 2, 6, energy2)
-    wb2.save(excel)
+    wb2.save(excel_b)
     wb2.close()
     wb.close()
     logging.info("energy change calc done")
@@ -1270,7 +1252,7 @@ for step in range(TS):
     upgrade_info(True)
     if step == 0:
         last_excel_b = this_excel_b
-    heat_source(last_excel_a,thisTempCae_b)
+    heat_source(this_excel_a,this_excel_b,thisTempCae_b)
     output_temp(this_excel_b, thisTempOdb_b)
     calc_decomposition(last_excel_b, this_excel_b)
     calc_vapor(this_excel_b, False)
