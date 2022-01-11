@@ -31,6 +31,8 @@ import numpy as np
                                 //-elemp[i][16]-this step initial vapor water mass
                                 //-elemp[i][17]-this step final liquid water mass
                                 //-elemp[i][18]-this step final vapor water mass
+                                //-elemp[i][19]-additional specific heat capacity
+                                //-elemp[i][20]-original specific heat capacity in specific temperature
 
 	double elemdh[EN][]={0.0};//elemdh[i][0]-the total amount of moisture transported per unit volume of hcp before this time step(Kg/m3)
 								//elemdh[][1]-initial volume fraction of normal C-S-H;
@@ -913,7 +915,7 @@ def calc_mass(massCae):
         elements = p.elements[NAE + i:NAE + i + 1]
         p.Set(elements=elements, name=setName)
         region = p.sets[setName]
-        p.SectionAssignment(region=region, sectionName='Section-M-{}'.format(NAE + i + 1),
+        p.SectionAssignment(region=region, sectionName=sectionName,
                             offset=0.0, offsetType=MIDDLE_SURFACE, offsetField='',
                             thicknessAssignment=FROM_SECTION)
     # =============================输入骨料的质量传输相关参数===================================
@@ -983,7 +985,7 @@ def calc_mass(massCae):
     output_result(thisMassOdb)
 
 
-def submit_job(caeName):
+def submit_job():
     logging.info("submit_job")
     global last_excel
     global mdb
@@ -1020,7 +1022,7 @@ def submit_job(caeName):
     myJob = mdb.Job(name=jobName, model='Model-1', numCpus=8, numDomains=8, numGPUs=0)
     myJob.submit()
     myJob.waitForCompletion()
-    mdb.saveAs(pathName=caeName)
+    mdb.saveAs(pathName=thisTempCae)
 
 
 def upgrade_info():
@@ -1094,10 +1096,20 @@ def node_info(excel):
 
 def heat_source():
     wb = openpyxl.load_workbook(vapor_table)
+    wb2 = openpyxl.load_workbook(this_excel)
     sheet1 = wb["SteamEnergy"]
+    st1 = wb2.create_sheet("HeatAbsorb", 0)
     # 未考虑湿气吸热前单步内的初始温度elemp[i][4]和末尾温度elemp[i][5]
     # 1.根据excel结果确定单位体积基质液态水和气态水的质量
     # 2.根据饱和蒸汽表中能量确定单步内初始温度和末尾温度的能量变化值
+    st1.cell(1, 1, "uf1")
+    st1.cell(1, 2, "ug1")
+    st1.cell(1, 3, "uf2")
+    st1.cell(1, 4, "ug2")
+    st1.cell(1, 5, "energy1")
+    st1.cell(1, 6, "energy2")
+    st1.cell(1, 7, "addSpeHeat")
+    st1.cell(1, 8, "SpeHeat")
     for i in range(NME):
         # a.差值确定初始液态水和气态水单位质量的能量
         for j in range(3, 51):
@@ -1106,14 +1118,70 @@ def heat_source():
                              sheet1.cell(j + 1, 1).value, elemp[i][4])
                 ug1 = interp(sheet1.cell(j, 6).value, sheet1.cell(j + 1, 6).value, sheet1.cell(j, 1).value,
                              sheet1.cell(j + 1, 1).value, elemp[i][4])
-
+                break
+        for k in range(3, 51):
+            if sheet1.cell(k, 1).value <= elemp[i][5] <= sheet1.cell(k + 1, 1).value:
+                uf2 = interp(sheet1.cell(k, 5).value, sheet1.cell(k + 1, 5).value, sheet1.cell(k, 1).value,
+                             sheet1.cell(k + 1, 1).value, elemp[i][5])
+                ug2 = interp(sheet1.cell(k, 6).value, sheet1.cell(k + 1, 6).value, sheet1.cell(k, 1).value,
+                             sheet1.cell(k + 1, 1).value, elemp[i][5])
+                break
         # a.确定初始液态水和气态水总能量
-
-        energy1 = elemp[i][15]
+        energy1 = elemp[i][15] * uf1 + elemp[i][16] * ug1
+        energy2 = elemp[i][17] * uf2 + elemp[i][18] * ug2
+        st1.cell(i + 2, 1, uf1)
+        st1.cell(i + 2, 2, ug1)
+        st1.cell(i + 2, 3, uf2)
+        st1.cell(i + 2, 4, ug2)
+        st1.cell(i + 2, 5, energy1)
+        st1.cell(i + 2, 6, energy2)
+    logging.info("energy change calc done")
     # 3.对上述能量进行作差并除以（考虑湿气吸热前单步内的初始温度和末尾温度的差）得出附加比热
     # 4.将单元附加比热加到原基质比热上建立新的材料属性
-    # 5.提交作业进行计算
-    return 0
+    mdb.Model(name='Model-2', objectToCopy=mdb.models['Model-1'])
+    del mdb.models['Model-2'].parts['Part-1'].sectionAssignments[1]
+    for i in range(NME):
+        p = mdb.models['Model-2'].parts['Part-1']
+        materialName = "Material-M{}".format(i + 1 + NAE)
+        sectionName = "Section-M{}".format(i + 1 + NAE)
+        mdb.models['Model-2'].Material(name=materialName)
+        elemp[i][19] = (energy2 - energy1) / (elemp[i][5] - elemp[i][4]) + abs(elemvp[i][13]) * 0.5 * (ug1 + ug2)
+        elemp[i][20] = 900 + 80 * elemp[i][3] / 120 - 4 * pow((elemp[i][3] / 120), 2) + elemp[i][19]
+        st1.cell(i + 2, 7, elemp[i][19])
+        st1.cell(i + 2, 8, elemp[i][20])
+        mdb.models['Model-2'].materials[materialName].Density(table=((2500.0,),))
+        mdb.models['Model-2'].materials[materialName].SpecificHeat(table=((elemp[i][20],),))
+        mdb.models['Model-2'].materials[materialName].Conductivity(temperatureDependency=ON,
+                                                                   table=((2.0, 20.0), (1.6, 300.0),
+                                                                          (1.5, 400.0), (1.4, 500.0)))
+        mdb.models['Model-2'].HomogeneousSolidSection(name=sectionName, material=materialName, thickness=None)
+        setName = 'SET-{}'.format(i + 1 + NAE)
+        elements = p.elements[NAE + i:NAE + i + 1]
+        p.Set(elements=elements, name=setName)
+        region = p.sets[setName]
+        p.SectionAssignment(region=region, sectionName=sectionName,
+                            offset=0.0, offsetType=MIDDLE_SURFACE, offsetField='',
+                            thicknessAssignment=FROM_SECTION)
+        # 重新定义预定义场
+        # 5.提交作业进行计算
+        if step == 0:
+            jobName = "Job-Temp-2-{}".format(step + 1)
+            myJob = mdb.Job(name=jobName, model='Model-2', numCpus=8, numDomains=8, numGPUs=0)
+            myJob.submit()
+            myJob.waitForCompletion()
+            mdb.saveAs(pathName=thisTempCae)
+        else:
+            mdb.models['Model-2'].predefinedFields['Predefined Field-1'].setValues(
+                distributionType=FROM_FILE, fileName=lastTempOdb2, beginStep=1,
+                beginIncrement=get_increment(lastTempOdb2))
+            jobName = "Job-Temp-2-{}".format(step + 1)
+            myJob = mdb.Job(name=jobName, model='Model-2', numCpus=8, numDomains=8, numGPUs=0)
+            myJob.submit()
+            myJob.waitForCompletion()
+            mdb.saveAs(pathName=thisTempCae)
+    wb2.save(this_excel)
+    wb.close()
+    wb2.close()
 
 
 # ====================================正式计算============================================
@@ -1144,15 +1212,16 @@ CSH, pCSH, CH, AFt, CE, SF, CP, CPF, CP2, CP2D, CPAFt, CPCH, sf, hydc, hydsf, wc
 Sd, Dc0, Dc1, fvAFt, fvCH, fvCSH, inte, ftm, fta = cal_initial(excel_base)
 # 开始循环
 for step in range(TS):
-    # elem = [[0.0 for i in range(6)] for j in range(NME)]
     elemdh = [[0.0 for i in range(25)] for j in range(NME)]
     elemp = [[0.0 for i in range(17)] for j in range(NME)]
     elempe = [[0.0 for i in range(9)] for j in range(NME)]
     elemvp = [[0.0 for i in range(19)] for j in range(NME)]
     upgrade_info()
     lastTempOdb = 'Job-Temp0{}.odb'.format(step)
+    lastTempOdb2 = 'Job-Temp-2-{}.odb'.format(step)
     lastTempCae = 'Model-Temp0{}.cae'.format(step)
     thisTempOdb = "Job-Temp0{}.odb".format(step + 1)
+    thisTempOdb2 = "Job-Temp-2-{}.odb".format(step + 1)
     thisTempCae = 'Model-Temp0{}.cae'.format(step + 1)
     thisMassCae = 'Model-Mass0{}.cae'.format(step + 1)
     thisMassOdb = "Job-Mass0{}.odb".format(step + 1)
@@ -1180,9 +1249,15 @@ for step in range(TS):
     # g.输出结点相关数据
     logging.info("g-step:{}-output_node_info-step-".format(step + 1))
     node_info(this_excel)
+    heat_source()
+    output_temp(thisTempOdb)
+    calc_decomposition()
+    calc_vapor(False)
+    calc_mass(thisMassCae)
+    calc_vapor(True)
+    node_info(this_excel)
     if MT >= 600:
         break
     if step == TS - 1:
         logging.info("ALL  DONE!!!")
-
 # done
