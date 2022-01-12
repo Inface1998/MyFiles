@@ -468,7 +468,7 @@ def calc_decomposition(excel0, excel):
             else:
                 x = x1
         elemp[i][13] = D1 * Em * x1
-    sheet = wb2.create_sheet("Element-DH")
+    sheet = wb2["Element-DH"]
     sheet.cell(1, 1, "ELabel")
     sheet.cell(1, 2, "CD-AFt")  # elemdh[i][8]
     sheet.cell(1, 3, "CD-CH")  # elemdh[i][9]
@@ -737,7 +737,7 @@ def get_coefficient():
     wb.close()
 
 
-def calc_mass(excel0, excel, massCae, MassOdb):
+def calc_mass(excel0, excel, massCae, MassOdb, flag):
     def calc_volume():
         wbv = openpyxl.load_workbook(excel)
         wb2 = openpyxl.load_workbook(excel0)
@@ -831,7 +831,7 @@ def calc_mass(excel0, excel, massCae, MassOdb):
     def output_vppe():
         wb = openpyxl.load_workbook(excel)
         # 输出质量传输的相关参数
-        ws1 = wb.create_sheet("Element-VP-PE", 0)
+        ws1 = wb["Element-VP-PE"]
         ws1.cell(1, 1, "ELabel")
         # output-----elemvp
         ws1.cell(1, 2, "SpecificVg")  # elemvp[i][1]
@@ -850,7 +850,8 @@ def calc_mass(excel0, excel, massCae, MassOdb):
         ws1.cell(1, 15, "TotalMTrans")  # elemvp[i][14]
         ws1.cell(1, 16, "M-SDegree1)")  # elemvp[i][15]
         ws1.cell(1, 17, "WaterExpand")  # elemvp[i][16]
-        ws1.cell(1, 18, "MoisMass2")  # elemdh[i][18]===mm
+        ws1.cell(1, 18, "WDensity")  # elemvp[i][17] density of liquid water in specific temperature
+        ws1.cell(1, 19, "MoisMass2")  # elemdh[i][18]===mm
         # output-----elempe
         ws1.cell(1, 21, "LV1P")  # elempe[i][1]
         ws1.cell(1, 22, "LV2P")  # elempe[i][2]
@@ -975,7 +976,10 @@ def calc_mass(excel0, excel, massCae, MassOdb):
                                            field='AnalyticalField-2', magnitudes=(1.0,))
     wb.close()
     logging.info("submit mass job")
-    jobName = "Job-Mass-a-{}".format(step + 1)
+    if not flag:
+        jobName = "Job-Mass-a-{}".format(step + 1)
+    else:
+        jobName = "Job-Mass-b-{}".format(step + 1)
     myJob = mdb.Job(name=jobName, model='Model-Mass-1', numCpus=8, numDomains=8, numGPUs=0)
     mdb.jobs[jobName].submit()
     myJob.waitForCompletion()
@@ -984,7 +988,7 @@ def calc_mass(excel0, excel, massCae, MassOdb):
     output_result(MassOdb)
 
 
-def submit_job_a(LastTempCae,LastTempOdb,ThisTempCae):
+def submit_job_a(LastTempCae, LastTempOdb, ThisTempCae):
     logging.info("submit_job")
     global mdb
     if step != 0:
@@ -1093,8 +1097,8 @@ def node_info(excel):
     wb.close()
 
 
-def heat_source(excel_a,excel_b,TempCae):
-    def create_model(LastTempCae,LastTempOdb):
+def heat_source(excel_a, excel_b, TempCae):
+    def create_model(LastTempCae, LastTempOdb):
         if step != 0:
             mdb = openMdb(pathName=LastTempCae)
             # 更改温度计算中的预定义场
@@ -1103,7 +1107,9 @@ def heat_source(excel_a,excel_b,TempCae):
                 beginIncrement=get_increment(LastTempOdb))
         # 建立新模型
         global mdb
+        global a1
         mdb.Model(name='Model-2', objectToCopy=mdb.models['Model-1'])
+        a1 = mdb.models['Model-2'].rootAssembly.instances['Part-1-1']
         del mdb.models['Model-2'].parts['Part-1'].sectionAssignments[1]
         # 对上述能量进行作差并除以（考虑湿气吸热前单步内的初始温度和末尾温度的差）得出附加比热
         # 将单元附加比热加到原基质比热上建立新的材料属性
@@ -1112,10 +1118,6 @@ def heat_source(excel_a,excel_b,TempCae):
             materialName = "Material-M{}".format(i + 1 + NAE)
             sectionName = "Section-M{}".format(i + 1 + NAE)
             mdb.models['Model-2'].Material(name=materialName)
-            elemp[i][19] = (energy2 - energy1) / (elemp[i][5] - elemp[i][4]) + abs(elemvp[i][13]) * 0.5 * (ug1 + ug2)
-            elemp[i][20] = 900 + 80 * elemp[i][3] / 120 - 4 * pow((elemp[i][3] / 120), 2) + elemp[i][19]
-            st1.cell(i + 2, 7, elemp[i][19])
-            st1.cell(i + 2, 8, elemp[i][20])
             mdb.models['Model-2'].materials[materialName].Density(table=((2500.0,),))
             mdb.models['Model-2'].materials[materialName].SpecificHeat(table=((elemp[i][20],),))
             mdb.models['Model-2'].materials[materialName].Conductivity(temperatureDependency=ON,
@@ -1147,12 +1149,16 @@ def heat_source(excel_a,excel_b,TempCae):
     st1.cell(1, 8, "SpeHeat")
     for i in range(NME):
         # a.差值确定初始液态水和气态水单位质量的能量
+        # 初始化
+        uf1, ug1, uf2, ug2, energy1, energy2 = 0, 0, 0, 0, 0, 0
         for j in range(3, 51):
             if sheet1.cell(j, 1).value <= elemp[i][4] <= sheet1.cell(j + 1, 1).value:
                 uf1 = interp(sheet1.cell(j, 5).value, sheet1.cell(j + 1, 5).value, sheet1.cell(j, 1).value,
                              sheet1.cell(j + 1, 1).value, elemp[i][4])
                 ug1 = interp(sheet1.cell(j, 6).value, sheet1.cell(j + 1, 6).value, sheet1.cell(j, 1).value,
                              sheet1.cell(j + 1, 1).value, elemp[i][4])
+                # 确定初始湿气的总能量
+                energy1 = elemp[i][15] * uf1 + elemp[i][16] * ug1
                 break
         for k in range(3, 51):
             if sheet1.cell(k, 1).value <= elemp[i][5] <= sheet1.cell(k + 1, 1).value:
@@ -1160,28 +1166,35 @@ def heat_source(excel_a,excel_b,TempCae):
                              sheet1.cell(k + 1, 1).value, elemp[i][5])
                 ug2 = interp(sheet1.cell(k, 6).value, sheet1.cell(k + 1, 6).value, sheet1.cell(k, 1).value,
                              sheet1.cell(k + 1, 1).value, elemp[i][5])
+                # 确定末尾湿气的总能量
+                energy2 = elemp[i][17] * uf2 + elemp[i][18] * ug2
                 break
-        # a.确定初始液态水和气态水总能量
-        energy1 = elemp[i][15] * uf1 + elemp[i][16] * ug1
-        energy2 = elemp[i][17] * uf2 + elemp[i][18] * ug2
+        if energy2 - energy1 > 0:
+            elemp[i][19] = (energy2 - energy1) / (elemp[i][5] - elemp[i][4]) + abs(elemvp[i][13]) * 0.5 * (ug1 + ug2)
+        elemp[i][20] = 900 + 80 * elemp[i][3] / 120 - 4 * pow((elemp[i][3] / 120), 2) + elemp[i][19]
         st1.cell(i + 2, 1, uf1)
         st1.cell(i + 2, 2, ug1)
         st1.cell(i + 2, 3, uf2)
         st1.cell(i + 2, 4, ug2)
         st1.cell(i + 2, 5, energy1)
         st1.cell(i + 2, 6, energy2)
+        st1.cell(i + 2, 6, energy2)
+        st1.cell(i + 2, 6, energy2)
+        st1.cell(i + 2, 7, elemp[i][19])
+        st1.cell(i + 2, 8, elemp[i][20])
     wb2.save(excel_b)
     wb2.close()
     wb.close()
     logging.info("energy change calc done")
     logging.info("submit_job")
     # 5.提交作业进行计算
-    create_model(lastTempCae_b,lastTempOdb_b)
+    create_model(lastTempCae_b, lastTempOdb_b)
     jobName = "Job-Temp-b-{}".format(step + 1)
     myJob = mdb.Job(name=jobName, model='Model-2', numCpus=8, numDomains=8, numGPUs=0)
     myJob.submit()
     myJob.waitForCompletion()
     mdb.saveAs(pathName=TempCae)
+
 
 # ====================================正式计算============================================
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -1235,7 +1248,7 @@ for step in range(TS):
         last_excel_a = this_excel_a
     upgrade_info(False)
     # a.提交作业计算温度
-    submit_job_a(lastTempCae_a,lastTempOdb_a,thisTempCae_a)
+    submit_job_a(lastTempCae_a, lastTempOdb_a, thisTempCae_a)
     # b.读取单步末基质节点温度
     output_temp(this_excel_a, thisTempOdb_a)
     # c.热分解计算
@@ -1243,7 +1256,7 @@ for step in range(TS):
     # d.蒸汽压计算
     calc_vapor(this_excel_a, False)
     # e.质量传输确定
-    calc_mass(last_excel_a, this_excel_a, thisMassCae_a, thisMassOdb_a)
+    calc_mass(last_excel_a, this_excel_a, thisMassCae_a, thisMassOdb_a, False)
     # f.再次计算蒸汽压
     calc_vapor(this_excel_a, True)
     # g.输出结点相关数据
@@ -1252,11 +1265,11 @@ for step in range(TS):
     upgrade_info(True)
     if step == 0:
         last_excel_b = this_excel_b
-    heat_source(this_excel_a,this_excel_b,thisTempCae_b)
+    heat_source(this_excel_a, this_excel_b, thisTempCae_b)
     output_temp(this_excel_b, thisTempOdb_b)
     calc_decomposition(last_excel_b, this_excel_b)
     calc_vapor(this_excel_b, False)
-    calc_mass(last_excel_b, this_excel_b, thisMassCae_b, thisMassOdb_b)
+    calc_mass(last_excel_b, this_excel_b, thisMassCae_b, thisMassOdb_b, True)
     calc_vapor(this_excel_b, True)
     node_info(this_excel_b)
     if MT >= 600:
