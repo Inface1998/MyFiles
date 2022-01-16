@@ -55,7 +55,7 @@ with open("E:/Abaqus/Code/CycleInputFile/OdbText.txt", "w+") as f:
     f.write("\n")
     f.write("*Node matrixVapor\n")
     for i in range(10):
-        wb2 = openpyxl.load_workbook("E:/Abaqus/Code/CycleOutputFile/1-5-19/Step{}.xlsx".format(i + 1))
+        wb2 = openpyxl.load_workbook("E:/Abaqus/Code/CycleOutputFile/1-13-10/2Step{}.xlsx".format(i + 1))
         f.write("Frame: Increment      0: Step Time = {} \n".format(i + 1))
         s1 = wb2["AllNode"]
         count = 2

@@ -881,6 +881,8 @@ def calc_mass(excel0, excel, massCae, MassOdb, flag):
             ws1.cell(i + 2, 17, elemvp[i][16])
             ws1.cell(i + 2, 18, elemvp[i][17])
             ws1.cell(i + 2, 19, elemvp[i][18])
+            if MT < 100:
+                ws1.cell(i + 2, 19, elemdh[i][18])
             # output-----elempe
             ws1.cell(i + 2, 21, elempe[i][1])
             ws1.cell(i + 2, 22, elempe[i][2])
@@ -1089,20 +1091,21 @@ def node_info(excel):
     sheet3 = wb["Element-VP-PE"]
     sheet4 = wb["Element-DH"]
     info_output(13, 8, "vapor1", sheet1)
-    info_output(19, 9, "vapor2", sheet1)
+    info_output(21, 9, "vapor2", sheet1)
     info_output(12, 10, "MMass1", sheet4)
-    info_output(18, 11, "MMass2", sheet3)
-    info_output(14, 12, "MLoss", sheet3)
+    info_output(19, 11, "MMass2", sheet3)
+    info_output(14, 12, "ThisMLoss", sheet3)
+    info_output(15, 13, "TotalMLoss", sheet3)
     wb.save(excel)
     wb.close()
 
 
 def heat_source(excel_a, excel_b, TempCae):
-    def create_model(LastTempCae, LastTempOdb):
+    def create_model(ThisTempCae, LastTempOdb):
         if step != 0:
-            mdb = openMdb(pathName=LastTempCae)
+            mdb = openMdb(pathName=ThisTempCae)
             # 更改温度计算中的预定义场
-            mdb.models['Model-2'].predefinedFields['Predefined Field-1'].setValues(
+            mdb.models['Model-1'].predefinedFields['Predefined Field-1'].setValues(
                 distributionType=FROM_FILE, fileName=LastTempOdb, beginStep=1,
                 beginIncrement=get_increment(LastTempOdb))
         # 建立新模型
@@ -1167,10 +1170,10 @@ def heat_source(excel_a, excel_b, TempCae):
                 ug2 = interp(sheet1.cell(k, 6).value, sheet1.cell(k + 1, 6).value, sheet1.cell(k, 1).value,
                              sheet1.cell(k + 1, 1).value, elemp[i][5])
                 # 确定末尾湿气的总能量
-                energy2 = elemp[i][17] * uf2 + elemp[i][18] * ug2
+                energy2 = elemp[i][17] * uf2 + elemp[i][18] * ug2 + abs(elemvp[i][13]) * 0.5 * (ug1 + ug2)
                 break
         if energy2 - energy1 > 0:
-            elemp[i][19] = (energy2 - energy1) / (elemp[i][5] - elemp[i][4]) + abs(elemvp[i][13]) * 0.5 * (ug1 + ug2)
+            elemp[i][19] = (energy2 - energy1) / (elemp[i][5] - elemp[i][4])
         elemp[i][20] = 900 + 80 * elemp[i][3] / 120 - 4 * pow((elemp[i][3] / 120), 2) + elemp[i][19]
         st1.cell(i + 2, 1, uf1)
         st1.cell(i + 2, 2, ug1)
@@ -1188,7 +1191,7 @@ def heat_source(excel_a, excel_b, TempCae):
     logging.info("energy change calc done")
     logging.info("submit_job")
     # 5.提交作业进行计算
-    create_model(lastTempCae_b, lastTempOdb_b)
+    create_model(thisTempCae_a, lastTempOdb_b)
     jobName = "Job-Temp-b-{}".format(step + 1)
     myJob = mdb.Job(name=jobName, model='Model-2', numCpus=8, numDomains=8, numGPUs=0)
     myJob.submit()
