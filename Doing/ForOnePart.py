@@ -255,6 +255,7 @@ NME = len(a1.sets['Set-Matrix'].elements)
 NAE = len(a1.sets['Set-Balls'].elements)
 # 获取当前工作列表
 work_path = os.getcwd()
+# 在工作目录下创建存放Excel文件的文件夹
 excel_path = work_path + "/OutputExcel"
 if not os.path.exists(excel_path):
     os.mkdir(excel_path)
