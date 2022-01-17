@@ -194,7 +194,15 @@ fiber_length = 0.035    # 纤维长度
 fiber_amount = 750   # 纤维根数 >=2
 fibers_date(fiber_amount, fiber_length)
 # 提取数据到指定文件
-with open("E:\Abaqus\Code\CycleInputFile\data_aggregate.txt", 'w') as da:
+# 获取当前目录
+current_path = os.getcwd()
+# 获取上级目录
+parent_dir = os.path.dirname(current_path)
+# 在上级目录下创建文件夹将输入文件汇总
+dir = parent_dir + "\CycleInputFile"
+if not os.path.exists(dir):
+    os.mkdir(dir)
+with open(dir+"\data_aggregate.txt", 'w') as da:
     for i in range(len(data_aggregate)):
         da.write('%.8f' % data_aggregate[i][0] + "," +
                  '%.8f' % data_aggregate[i][1] + "," +
@@ -203,7 +211,7 @@ with open("E:\Abaqus\Code\CycleInputFile\data_aggregate.txt", 'w') as da:
         if i != len(data_aggregate) - 1:
             da.write("\n")
 
-with open("E:\Abaqus\Code\CycleInputFile\data_fibers.txt", 'w') as da:
+with open(dir+"\data_fibers.txt", 'w') as da:
     for i in range(len(fibers)):
         da.write('%.8f' % fibers[i][0][0] + "," +
                  '%.8f' % fibers[i][0][1] + "," +

@@ -148,6 +148,9 @@ def get_node_coord(excel_name):
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(level=logging.INFO, filename='./log.txt', format=LOG_FORMAT, datefmt=DATE_FORMAT)
+# 锁定读入文件位置
+input_dir = "E:/Abaqus/Code/MyCoding/CycleInputFile"
+file_aggregate = input_dir + "/data_aggregate.txt"
 # 定义立方体试块边长（mm）
 side_length = 0.1
 IT = 12.5
@@ -170,15 +173,14 @@ mdb.models['Model-1'].materials['Material-Matrix'].SpecificHeat(temperatureDepen
 mdb.models['Model-1'].materials['Material-Matrix'].Expansion(table=((9.1e-06,),))
 mdb.models['Model-1'].materials['Material-Matrix'].Conductivity(temperatureDependency=ON,
                                                                 table=((1.96, 20.0), (1.6, 200.0), (1.48, 300.0),
-                                                                    (1.34, 400.0), (1.2, 500.0), (1.12, 600.0),
-                                                                    (1, 700.0),))
+                                                                       (1.34, 400.0), (1.2, 500.0), (1.12, 600.0),
+                                                                       (1, 700.0),))
 mdb.models['Model-1'].Material(name='Material-Aggregate')
 mdb.models['Model-1'].materials['Material-Aggregate'].Density(table=((3000.0,),))
 mdb.models['Model-1'].materials['Material-Aggregate'].Elastic(table=((40e9, 0.2),))
 mdb.models['Model-1'].materials['Material-Aggregate'].SpecificHeat(table=((900,),))
 mdb.models['Model-1'].materials['Material-Aggregate'].Expansion(table=((8.1e-06,),))
 mdb.models['Model-1'].materials['Material-Aggregate'].Conductivity(table=((1.55,),))
-file_aggregate = "E:\Abaqus\Code\CycleInputFile\data_aggregate.txt"
 b = np.loadtxt(file_aggregate, delimiter=',', dtype=np.float32)
 na = len(open(file_aggregate, 'rU').readlines())
 create_aggregate()
@@ -251,9 +253,14 @@ NN = len(a1.nodes.getByBoundingBox(-1, -1, 0, 1, 1, 1))
 NE = len(a1.elements.getByBoundingBox(-1, -1, 0, 1, 1, 1))
 NME = len(a1.sets['Set-Matrix'].elements)
 NAE = len(a1.sets['Set-Balls'].elements)
-excel_name = "E:/Abaqus/Code/CycleOutputFile/NNE.xlsx"
+# 获取当前工作列表
+work_path = os.getcwd()
+excel_path = work_path + "/OutputExcel"
+if not os.path.exists(excel_path):
+    os.mkdir(excel_path)
+excel_name = excel_path + "/NNE.xlsx"
 get_node_coord(excel_name)
 logging.info("nord_coord done")
-mdb.saveAs(pathName='E:/Abaqus/Workpace/Model-Temp01.cae')
+mdb.saveAs(pathName=work_path + '/Model-Temp01.cae')
 logging.info("saved!!")
 # done

@@ -1217,12 +1217,18 @@ NMN = len(a1.sets['Set-Matrix'].nodes)  # 基质节点个数
 SN = len(mdb.models['Model-1'].rootAssembly.allSurfaces['Surf-ALL'].nodes)  # 表面节点个数
 NME = len(a1.sets['Set-Matrix'].elements)  # 基质单元个数
 NAE = len(a1.sets['Set-Balls'].elements)  # 骨料单元个数
-# 定义数组
-# 计算硬化水泥浆体的初始体积分数并将初始信息赋予到各单元
-vapor_table = "E:/Abaqus/Code/CycleInputFile/VaporTable.xlsx"
-excel_base = "E:/Abaqus/Code/CycleOutputFile/NNE.xlsx"
-condition_mass = "E:/Abaqus/Code/CycleInputFile/Condition_mass.txt"
-initial_excel = "E:/Abaqus/Code/CycleInputFile/VertifyData.xlsx"
+# 锁定文件位置信息
+# 当前工作目录
+work_path = os.getcwd()
+# 输出表格的存放目录
+excel_path = work_path + "/OutputExcel"
+# 输入文件目录
+input_dir = "E:/Abaqus/Code/MyCoding/CycleInputFile"
+# 各文件位置信息
+vapor_table = input_dir + "/VaporTable.xlsx"        # 蒸汽压表格
+excel_base = excel_path+"/NNE.xlsx"                 # 初始单元节点信息表
+condition_mass = input_dir + "/Condition_mass.txt"  # 水灰比等初始信息
+initial_excel = input_dir + "/VertifyData.xlsx"     # 温度场验证文件
 CSH, pCSH, CH, AFt, CE, SF, CP, CPF, CP2, CP2D, CPAFt, CPCH, sf, hydc, hydsf, wc, dsf, Em, Eag, \
 Sd, Dc0, Dc1, fvAFt, fvCH, fvCSH, inte, ftm, fta = cal_initial(excel_base)
 # 开始循环
@@ -1243,10 +1249,10 @@ for step in range(TS):
     thisMassCae_b = 'Model-Mass-b-{}.cae'.format(step + 1)
     thisMassOdb_a = "Job-Mass-a-{}.odb".format(step + 1)
     thisMassOdb_b = "Job-Mass-b-{}.odb".format(step + 1)
-    last_excel_a = "E:/Abaqus/Code/CycleOutputFile/1Step{}.xlsx".format(step)
-    this_excel_a = "E:/Abaqus/Code/CycleOutputFile/1Step{}.xlsx".format(step + 1)
-    last_excel_b = "E:/Abaqus/Code/CycleOutputFile/2Step{}.xlsx".format(step)
-    this_excel_b = "E:/Abaqus/Code/CycleOutputFile/2Step{}.xlsx".format(step + 1)
+    last_excel_a = excel_path + "/1Step{}.xlsx".format(step)
+    this_excel_a = excel_path + "/1Step{}.xlsx".format(step + 1)
+    last_excel_b = excel_path + "/2Step{}.xlsx".format(step)
+    this_excel_b = excel_path + "/2Step{}.xlsx".format(step + 1)
     if step == 0:
         last_excel_a = this_excel_a
     upgrade_info(False)
