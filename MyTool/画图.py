@@ -9,34 +9,42 @@ import openpyxl
 # 创建空数组提取指定时间的温度值
 # 确定需要提取的点
 data_temp = []
+data_temp2 = []
 temp_actual = []
 data_vapor = []
 data_time = []
 # 节点编号
-nodeNumber = 707
+# nodeNumber = 707
+nodeNumber2 = 67
 # 总文件数
 fn = 31
 wb2 = openpyxl.load_workbook('E:/Abaqus/Code/CycleInputFile/VertifyData.xlsx')
 st1 = wb2["Sheet1"]
 for i in range(1, fn + 1):
-    wb = openpyxl.load_workbook('E:/Abaqus/Code/CycleOutputFile/1-14-10/1Step{}.xlsx'.format(i))
+    wb = openpyxl.load_workbook('E:/Abaqus/Code/CycleOutputFile/1-17-10/1Step{}.xlsx'.format(i))
+    wb2 = openpyxl.load_workbook('E:/Abaqus/Code/CycleOutputFile/1-17-10/2Step{}.xlsx'.format(i))
     sheet1 = wb["AllNode"]
-    data_t = sheet1.cell(nodeNumber + 1, 5).value
+    sheet2 = wb2["AllNode"]
+    data_t = sheet1.cell(nodeNumber2 + 1, 5).value
+    data_t2 = sheet2.cell(nodeNumber2 + 1, 5).value
     data_temp.append(data_t)
-    data_v = sheet1.cell(nodeNumber + 1, 9).value
+    data_temp2.append(data_t2)
+    data_v = sheet1.cell(nodeNumber2 + 1, 9).value
     if data_v == 0:
         data_v = 0.1
     data_vapor.append(data_v)
     timy = 10 * i
     data_time.append(timy)
-    temp_actual.append(st1.cell(4 + 120 * i, 3).value)
+    temp_actual.append(st1.cell(4 + 120 * i, 6).value)
     wb.close()
 wb2.close()
 X = data_time
 C = data_temp
+C2 = data_temp2
 S = temp_actual
 # 绘制余弦曲线，使用蓝色的、连续的、宽度为 1 （像素）的线条
 plot(X, C, color="blue", linewidth=1.0, linestyle="-")
+plot(X, C2, color="red", linewidth=1.0, linestyle="-")
 # 绘制正弦曲线，使用绿色的、连续的、宽度为 1 （像素）的线条
 plot(X, S, color="green", linewidth=1.0, linestyle="-")
 

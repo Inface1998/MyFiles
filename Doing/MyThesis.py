@@ -533,7 +533,7 @@ def calc_vapor(excel, flag):
                 sheet.cell(i + 2, 12, elemp[i][12])
                 sheet.cell(i + 2, 13, elemp[i][8])
                 sheet.cell(i + 2, 14, elemp[i][3])
-                elemp[i][15] = elemdh[i][17] * elemvp[i][8]
+                elemp[i][15] = elemdh[i][18] * elemvp[i][8]
                 elemp[i][16] = elemdh[i][18] - elemp[i][15]
                 sheet.cell(i + 2, 15, elemp[i][15])
                 sheet.cell(i + 2, 16, elemp[i][16])
@@ -554,7 +554,7 @@ def calc_vapor(excel, flag):
                 sheet.cell(i + 2, 23, elemvp[i][8])
                 elemvp[i][19] = 1.0 / elemp[i][7] / 1e3
                 sheet.cell(i + 2, 24, elemvp[i][19])
-                elemp[i][17] = elemdh[i][17] * elemvp[i][8]
+                elemp[i][17] = elemdh[i][18] * elemvp[i][8]
                 elemp[i][18] = elemdh[i][18] - elemp[i][17]
                 sheet.cell(i + 2, 25, elemp[i][17])
                 sheet.cell(i + 2, 26, elemp[i][18])
@@ -1091,7 +1091,7 @@ def node_info(excel):
     sheet3 = wb["Element-VP-PE"]
     sheet4 = wb["Element-DH"]
     info_output(13, 8, "vapor1", sheet1)
-    info_output(21, 9, "vapor2", sheet1)
+    info_output(22, 9, "vapor2", sheet1)
     info_output(12, 10, "MMass1", sheet4)
     info_output(19, 11, "MMass2", sheet3)
     info_output(14, 12, "ThisMLoss", sheet3)
