@@ -5,6 +5,7 @@ import numpy as np
 from pylab import *
 import openpyxl
 # bbd04a74e5d8e5f4bf29a1bc3caeee90
+# bbd04a74e5d8e5f4bf29a1bc3caeee90
 # 提取数据
 # 创建空数组提取指定时间的温度值
 # 确定需要提取的点
