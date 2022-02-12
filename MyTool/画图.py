@@ -4,8 +4,6 @@
 import numpy as np
 from pylab import *
 import openpyxl
-# bbd04a74e5d8e5f4bf29a1bc3caeee90
-# bbd04a74e5d8e5f4bf29a1bc3caeee90
 # 提取数据
 # 创建空数组提取指定时间的温度值
 # 确定需要提取的点
@@ -19,11 +17,15 @@ data_time = []
 nodeNumber2 = 67
 # 总文件数
 fn = 31
-wb2 = openpyxl.load_workbook('E:/Abaqus/Code/CycleInputFile/VertifyData.xlsx')
+targetDir = "E:/Abaqus/Workpace/OutputExcel/2-8-19"
+vertifyDir = 'E:/Abaqus/Code/MyCoding/CycleInputFile/VertifyData.xlsx'
+wb2 = openpyxl.load_workbook(vertifyDir)
 st1 = wb2["Sheet1"]
 for i in range(1, fn + 1):
-    wb = openpyxl.load_workbook('E:/Abaqus/Code/CycleOutputFile/1-17-10/1Step{}.xlsx'.format(i))
-    wb2 = openpyxl.load_workbook('E:/Abaqus/Code/CycleOutputFile/1-17-10/2Step{}.xlsx'.format(i))
+    dir1 = targetDir + "/1Step{}.xlsx".format(i)
+    dir2 = targetDir + "/2Step{}.xlsx".format(i)
+    wb = openpyxl.load_workbook(dir1)
+    wb2 = openpyxl.load_workbook(dir2)
     sheet1 = wb["AllNode"]
     sheet2 = wb2["AllNode"]
     data_t = sheet1.cell(nodeNumber2 + 1, 5).value

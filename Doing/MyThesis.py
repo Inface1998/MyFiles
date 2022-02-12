@@ -1221,13 +1221,16 @@ NAE = len(a1.sets['Set-Balls'].elements)  # 骨料单元个数
 # 当前工作目录
 work_path = os.getcwd()
 # 输出表格的存放目录
-excel_path = work_path + "/OutputExcel"
+excel_path = work_path + "\OutputExcel"
+localtime = time.localtime(time.time())
+T = str(localtime.tm_mon) + "-" + str(localtime.tm_mday) + "-" + str(localtime.tm_hour)
+excel_path = os.path.join(excel_path, T)
 # 输入文件目录
 input_dir = "E:/Abaqus/Code/MyCoding/CycleInputFile"
 # 各文件位置信息
 vapor_table = input_dir + "/VaporTable.xlsx"        # 蒸汽压表格
 excel_base = excel_path+"/NNE.xlsx"                 # 初始单元节点信息表
-condition_mass = input_dir + "/Condition_mass.txt"  # 水灰比等初始信息
+condition_mass = input_dir + " /Condition_mass.txt"  # 水灰比等初始信息
 initial_excel = input_dir + "/VertifyData.xlsx"     # 温度场验证文件
 CSH, pCSH, CH, AFt, CE, SF, CP, CPF, CP2, CP2D, CPAFt, CPCH, sf, hydc, hydsf, wc, dsf, Em, Eag, \
 Sd, Dc0, Dc1, fvAFt, fvCH, fvCSH, inte, ftm, fta = cal_initial(excel_base)
